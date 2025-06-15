@@ -14,7 +14,7 @@ const Button = ({
   const variants = {
     primary: 'bg-[#FF9B00] hover:bg-[#CC7C00] text-black',
     secondary: 'bg-gray-500 hover:bg-gray-700 text-white',
-    outline: 'border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white',
+    outline: 'border border-[#FF9B00] text-black hover:bg-[#FF9B00] hover:text-black',
   };
 
   const sizes = {

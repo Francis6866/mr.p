@@ -19,6 +19,7 @@ const MultiStepForm = () => {
         agreeTerms: false,
         agreePrivacy: false,
       })
+    
 
       const validateStep = () => {
         const newErrors = {};
@@ -70,7 +71,6 @@ const MultiStepForm = () => {
       };
 
       // TODO: handle errors
-      // navigation back to login
       // radio button background color
       // checkbox size
       // icons to specify radio button

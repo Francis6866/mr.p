@@ -12,6 +12,7 @@ const Button = ({
   const baseStyles = 'font-[500] rounded transition duration-300';
 
   const variants = {
+    dashPrimary: 'bg-blue-700 hover:bg-blue-500 text-white',
     primary: 'bg-[#FF9B00] hover:bg-[#CC7C00] text-black',
     secondary: 'bg-gray-500 hover:bg-gray-700 text-white',
     outline: 'border border-[#FF9B00] text-black hover:bg-[#FF9B00] hover:text-black',

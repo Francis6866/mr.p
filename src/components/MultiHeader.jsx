@@ -2,8 +2,12 @@ import React from 'react'
 import { FaTimes, FaLongArrowAltLeft } from "react-icons/fa";
 import { Link } from 'react-router-dom'
 import Button from './Button'
+import { useNavigate } from 'react-router-dom'
+
 
 const MultiHeader = ({ prevStep, step }) => {
+    const navigate = useNavigate();
+    
   return (
     <div>
         <div className='flex justify-between items-center gap-8 py-8 px-4'>
@@ -24,7 +28,7 @@ const MultiHeader = ({ prevStep, step }) => {
             </div>
 
             {/* button */}
-            <div>
+            <div onClick={() => navigate('/')} className='cursor-pointer'>
                 <Button
                     type='button'
                     variant = 'outline'

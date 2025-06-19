@@ -22,6 +22,7 @@ const LoginSignupPage = () => {
       >
         <RegLogHeader
           isLogin={isLogin} 
+          setIslogin={setIslogin}
         />
 
         <div className='min-h-[calc(100vh-180px)] flex items-center max-sm:justify-center md:pl-20'>

@@ -3,7 +3,7 @@ import Input from './Input'
 import Button from './Button'
 import PasswordInput from './PasswordInput'
 
-const LoginForm = ({ handleIsLogin }) => {
+const LoginForm = ({ handleIsLogin, navigate }) => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [passwordType, setPasswordType] = useState('password')
@@ -42,6 +42,7 @@ const LoginForm = ({ handleIsLogin }) => {
         }
 
         console.log(formDetails)
+        navigate("/dashboard")
     }
 
   return (

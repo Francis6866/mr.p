@@ -3,11 +3,11 @@ import homeBg from '../assets/bg.svg'
 import RegLogHeader from '../components/RegLogHeader'
 import LoginForm from '../components/LoginForm'
 import ForgotForm from '../components/ForgotForm'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 const LoginSignupPage = () => {
     const [isLogin, setIslogin] = useState(true)
-
+    const navigate = useNavigate()
     const handleIsLogin = () => {
         setIslogin(prev => !prev)
     }
@@ -28,7 +28,7 @@ const LoginSignupPage = () => {
         <div className='min-h-[calc(100vh-180px)] flex items-center max-sm:justify-center md:pl-20'>
             {
                 isLogin 
-                ? <LoginForm handleIsLogin={handleIsLogin}/>
+                ? <LoginForm handleIsLogin={handleIsLogin} navigate={navigate}/>
                 : <ForgotForm handleIsLogin={handleIsLogin}/>
             }
         </div>

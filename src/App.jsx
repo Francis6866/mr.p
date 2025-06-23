@@ -8,6 +8,8 @@ import HomeDashboard from "./pages/HomeDashbord"
 import PatientDashboard from "./pages/PatientDashboard"
 import PatientMoney from "./components/PatientMoney"
 import RecordsDashboard from "./pages/RecordsDashboard"
+import PatientProfile from "./pages/patientProfile"
+import PatientRecords from "./pages/records"
 
 function App() {
 
@@ -18,9 +20,11 @@ function App() {
         <Route path="/register" element={<MultiStepForm />} />
         <Route path="dashboard" element={<DashboardLayout />}>
           <Route index element={<HomeDashboard />} />
-          <Route path="patient" element={<PatientDashboard /> }/>
-          <Route path="records" element={<RecordsDashboard /> }/>
-          <Route path="medic-card" element={<RecordsDashboard />}/>
+          <Route path="patients" element={<PatientDashboard />} />
+          <Route path="patients/records/:id" element={<PatientRecords />} />
+          <Route path="patient/:id" element={<PatientProfile />} />
+          <Route path="records" element={<RecordsDashboard />} />
+          <Route path="medicards" element={<RecordsDashboard />} />
         </Route>
       </Routes>
     </>

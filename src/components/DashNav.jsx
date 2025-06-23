@@ -1,72 +1,176 @@
-import React, { useState } from 'react'
-import { NavLink } from 'react-router-dom'
-import { FiHome, FiMenu } from "react-icons/fi";
-import { MdOutlineAccountBalanceWallet } from "react-icons/md";
-import { ImBooks } from "react-icons/im";
-import { FaRegAddressCard } from "react-icons/fa6";
-import { FiUser } from "react-icons/fi";
-import { MdAccountBalance } from "react-icons/md";
-import { AiOutlineAudit } from "react-icons/ai";
-import { FaPeopleGroup } from "react-icons/fa6";
-import { GrUserSettings } from "react-icons/gr";
+import React, { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom';
+import { FiHome, FiMenu } from 'react-icons/fi';
 
-// {`bg-gray-300 p-4 h-screen text-[14px] transition-all duration-300 ${isOpen ? 'w-48' : 'w-16'} overflow-hidden`}
+// Import icons from a suitable icon library (e.g., react-icons)
+import {
+    FaLayerGroup,
+    FaMoneyBillWave,
+    FaFingerprint,
+    FaExchangeAlt,
+    FaArrowRight,
+    FaArrowLeft,
+    FaExclamationTriangle,
+    FaBolt,
+    FaClipboardList,
+    FaUserFriends,
+    FaCog,
+    FaHeadset,
+    FaBook,
+    FaToggleOn,
+    FaTimes
+} from 'react-icons/fa';
 
 const DashNav = () => {
     const [isOpen, setIsOpen] = useState(false); // Toggle menu state
-  return (
-    <>
-        <nav className={`bg-gray-300 p-4 h-screen text-[14px] transition-all duration-300 overflow-hidden space-y-6`}>
-             {/* Toggle Button */}
-           <div className="flex justify-between items-center mb-6">
-            <button
-            className="text-blue-600 md:hidden"
-            onClick={() => setIsOpen(!isOpen)}
-            >
-             <FiMenu size={24} />
-            </button>
-            <span className={`text-blue-600 font-bold text-sm ${!isOpen && 'hidden'} md:block`}>
-             Menu
-           </span>
-          </div>
+    const [isCollapsed, setIsCollapsed] = useState(window.innerWidth < 768 ? true : false);
+    const [isMobile, setIsMobile] = useState(false);
 
-          {/* Navigation sections */}
-            <section className='space-y-6'>
-                <ul className='space-y-4'>
-                    <li className='flex items-center gap-2'> <FiHome color='blue' size={20} /> <NavLink to='/dashboard' className={({ isActive }) => `${isActive ? 'font-bold' : ''} ${!isOpen && 'hidden md:inline'}`} end>Home</NavLink></li>
-                </ul>
+    // Handle window resize and set mobile state
+    useEffect(() => {
+        console.log(window.innerWidth)
+    }, []);
 
-            </section>
+    const toggleNav = () => {
+        if (isMobile) {
+            setIsOpen(!isOpen)
+        } else {
+            setIsCollapsed(!isCollapsed);
+        }
+    };
 
-            <section className='space-y-6'>
-                {/* <h2 className='text-[12px] text-blue-500 uppercase'></h2> */}
-                <ul className='space-y-4'>
-                    <li className='flex items-center gap-2'><FiUser color='blue' size={20}/>
-                    <NavLink to='/dashboard/patient' className={({ isActive }) => `${isActive ? 'font-bold' : ''} ${!isOpen && 'hidden md:inline'}`}>Patient</NavLink></li>
+    // Handle clicking outside to close mobile nav
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (isMobile && isOpen && !event.target.closest('.nav-container')) {
+                setIsOpen(false);
+            }
+        };
 
-                    <li className='flex items-center gap-2'><ImBooks color='blue' size={20}/><NavLink to='/dashboard/records' className={({ isActive }) => `${isActive ? 'font-bold' : ''} ${!isOpen && 'hidden md:inline'}`}>Records</NavLink></li>
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isMobile, isOpen]);
 
-                    <li className='flex items-center gap-2'><FaRegAddressCard color='blue' size={20}/>
-                    <NavLink to='/dashboard/medic-card' className={({ isActive }) => `${isActive ? 'font-bold' : ''} ${!isOpen && 'hidden md:inline'}`}>Medic Card</NavLink></li>
-                </ul>
-            </section>
+    return (
+        <nav className={` bg-gray-300 h-screen text-[14px] transition-all duration-300 overflow-hidden space-y-6`}>
+            {/* Mobile Menu Button - Always visible on mobile */}
 
-            <section className='space-y-6'>
-                <div className='flex items-center gap-2'>
-                    <MdAccountBalance color='blue' size={20}/>
-                    <h2 className={`text-[12px] text-blue-500 uppercase ${!isOpen && 'hidden md:inline'}`}>Accounts</h2>
+
+            {/* Navigation */}
+            <nav className={`scroll-smooth nav-container h-screen bg-white shadow-lg transition-all duration-300 z-40 ${isMobile ? `${isOpen ? 'translate-x-0' : '-translate-x-full'} w-24` : `${isCollapsed ? 'w-20' : 'w-64'}`}`}>
+
+
+                {/* Profile Section */}
+                {window.innerWidth > 768 ? (
+                    <div className="p-4 border-b">
+                        <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span className="text-blue-600">TI</span>
+                            </div>
+                            {(!isCollapsed || isMobile) && (
+                                <div>
+                                    <h2 className="font-semibold text-gray-800">TECHTAN I...</h2>
+                                    <p className="text-sm text-gray-500">ID KPY30844</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ) :
+                    isCollapsed ? (
+                        <button
+                            onClick={toggleNav}
+                            className=" mt-5 ml-5 bg-white p-2 rounded-full shadow-lg hover:bg-gray-50"
+                        >
+                            <FiMenu
+                                size={24}
+                                className={`transform transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
+                            />
+
+                        </button>
+                    ) : <button
+                        onClick={toggleNav}
+                        className="fixed top-4 right-25 z-50 bg-white p-2 rounded-full shadow-lg hover:bg-gray-50"
+                    >
+                        <FaTimes
+                            color='crimson'
+                            size={24}
+                            className={`text-blue-500 transform transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
+                        />
+                    </button>}
+
+                {/* Main Navigation */}
+                <div className="p-4">
+                    <div className="space-y-4">
+                        {/* Main Features */}
+                        <div className="space-y-2">
+                            <NavItem icon={<FiHome />} text="Dashboard" isCollapsed={isCollapsed && !isMobile} />
+                            <NavItem icon={<FaMoneyBillWave />} text="Patients" isCollapsed={isCollapsed && !isMobile} />
+                            <NavItem icon={<FaFingerprint />} text="Records" isCollapsed={isCollapsed && !isMobile} />
+                            <NavItem icon={<FaExchangeAlt />} text="Medicards" isCollapsed={isCollapsed && !isMobile} />
+                        </div>
+
+                        {/* Transactions Section
+                        <div>
+                            {(!isCollapsed || isMobile) && (
+                                <h3 className="text-xs font-semibold text-blue-500 mb-2">TRANSACTIONS</h3>
+                            )}
+                            <div className="space-y-2">
+                                <NavItem icon={<FaArrowLeft />} text="Pay-ins" isCollapsed={isCollapsed && !isMobile} />
+                                <NavItem icon={<FaArrowRight />} text="Payouts" isCollapsed={isCollapsed && !isMobile} />
+                                <NavItem icon={<FaExclamationTriangle />} text="Disputes" isCollapsed={isCollapsed && !isMobile} />
+                                <NavItem icon={<FaBolt />} text="Settlements" isCollapsed={isCollapsed && !isMobile} />
+                            </div>
+                        </div> */}
+
+                        {/* Account Section */}
+                        <div>
+                            {(!isCollapsed || isMobile) && (
+                                <h3 className="text-xs font-semibold text-blue-500 mb-2">ACCOUNT</h3>
+                            )}
+                            <div className="space-y-2">
+                                <NavItem icon={<FaClipboardList />} text="Audit Logs" isCollapsed={isCollapsed && !isMobile} />
+                                <NavItem icon={<FaUserFriends />} text="Referrals" isCollapsed={isCollapsed && !isMobile} />
+                                <NavItem icon={<FaCog />} text="Settings" isCollapsed={isCollapsed && !isMobile} />
+                                <NavItem icon={<FaHeadset />} text="Support" isCollapsed={isCollapsed && !isMobile} />
+                                <NavItem icon={<FaBook />} text="Documentation" isCollapsed={isCollapsed && !isMobile} />
+                            </div>
+                        </div>
+                    </div>
+                    {/* Live Mode Toggle */}
+                    <div className={`mt-8 p-4 bg-gray-50 rounded-lg ${isCollapsed && !isMobile ? 'text-center' : ''}`}>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                                <FaToggleOn className="text-green-500 text-2xl" />
+                                {(!isCollapsed || isMobile) && <span className="font-medium">Live Mode</span>}
+                            </div>
+                            {(!isCollapsed || isMobile) && (
+                                <button className="text-gray-400 hover:text-gray-600">
+                                    ?
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
                 </div>
-                <ul className='space-y-4'>
-                    <li className='flex items-center gap-2'><AiOutlineAudit color='blue' size={20}/><NavLink to='/audit' className={({ isActive }) => `${isActive ? 'font-bold' : ''} ${!isOpen && 'hidden md:inline'}`}>Audit Logs</NavLink></li>
+            </nav>
 
-                    <li className='flex items-center gap-2'><FaPeopleGroup color='blue' size={20}/><NavLink to='/referrals' className={({ isActive }) => `${isActive ? 'font-bold' : ''} ${!isOpen && 'hidden md:inline'}`}>Referrals</NavLink></li>
-
-                    <li className='flex items-center gap-2'><GrUserSettings color='blue' size={20}/><NavLink to='/settings' className={({ isActive }) => `${isActive ? 'font-bold' : ''} ${!isOpen && 'hidden md:inline'}`}>Settings</NavLink></li>
-                </ul>
-            </section>
-        </nav>
-    </>
-  )
+        </nav >
+    )
 }
+
+
+// NavItem component for consistent styling
+const NavItem = ({ icon, text, isCollapsed }) => {
+    return (
+        <Link
+            to={text === "Dashboard" ? `/${text.toLowerCase().replace(/\s+/g, '-')}` : `/dashboard/${text.toLowerCase().replace(/\s+/g, '-')}`}
+            className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-2 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200`}
+            title={isCollapsed ? text : ''}
+        >
+            <span className="text-xl">{icon}</span>
+            {!isCollapsed && <span>{text}</span>}
+        </Link>
+    );
+};
 
 export default DashNav

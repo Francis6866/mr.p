@@ -64,7 +64,7 @@ const TypeOfAccount = ({formData, onChange, nextStep}) => {
         </div>
 
         <p className='text-[14px] text-center -mt-8'>
-            Already have an account? <Link className='text-[#576ae6]'>Login here</Link>
+            Already have an account? <Link to='/' className='text-[#576ae6]'>Login here</Link>
         </p>
     </div>
   )

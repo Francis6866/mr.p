@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { FiHome, FiMenu } from 'react-icons/fi';
 
 // Import icons from a suitable icon library (e.g., react-icons)
@@ -162,14 +162,15 @@ const DashNav = () => {
 // NavItem component for consistent styling
 const NavItem = ({ icon, text, isCollapsed }) => {
     return (
-        <Link
+        <NavLink
             to={text === "Dashboard" ? `/${text.toLowerCase().replace(/\s+/g, '-')}` : `/dashboard/${text.toLowerCase().replace(/\s+/g, '-')}`}
-            className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-2 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200`}
+            className={({isActive}) => `flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-2 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200 ${isActive ? 'bg-blue-50' : ''}`}
             title={isCollapsed ? text : ''}
+            end
         >
             <span className="text-xl">{icon}</span>
             {!isCollapsed && <span>{text}</span>}
-        </Link>
+        </NavLink>
     );
 };
 

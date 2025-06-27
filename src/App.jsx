@@ -10,6 +10,7 @@ import PatientMoney from "./components/PatientMoney"
 import RecordsDashboard from "./pages/RecordsDashboard"
 import PatientProfile from "./pages/patientProfile"
 import PatientRecords from "./pages/records"
+import MedicCardsDashboard from "./pages/MedicCardsDashboard"
 
 function App() {
 
@@ -24,7 +25,7 @@ function App() {
           <Route path="patients/records/:id" element={<PatientRecords />} />
           <Route path="patient/:id" element={<PatientProfile />} />
           <Route path="records" element={<RecordsDashboard />} />
-          <Route path="medicards" element={<RecordsDashboard />} />
+          <Route path="medicards" element={<MedicCardsDashboard />} />
         </Route>
       </Routes>
     </>

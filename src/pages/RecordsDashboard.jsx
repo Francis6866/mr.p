@@ -1,11 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { LineChart } from '@mui/x-charts/LineChart';
 import { IoPeopleOutline, IoSettingsOutline } from "react-icons/io5";
-import { FaRegCalendarCheck, FaRegHospital } from "react-icons/fa";
+import { FaDownload, FaRegCalendarCheck, FaRegHospital } from "react-icons/fa";
 import { BsThreeDotsVertical, BsSearch, BsBell, BsChevronRight, BsPlus } from "react-icons/bs";
 import { GoFilter } from "react-icons/go";
 import { FiEye, FiTrash2, FiX } from "react-icons/fi";
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchRecords } from '../store/slices/recordsSlice';
+import { formatDate } from '../utility';
+import { Loader } from '../components/loader';
 
 const CreatePatientModal = ({ isOpen, onClose, onPatientCreated }) => {
   const [formData, setFormData] = useState({
@@ -227,7 +231,7 @@ const DashboardHeader = ({ onCreatePatient }) => (
       <p className="text-gray-500">Patients records you created</p>
     </div>
     <div className="flex items-center gap-4">
-      
+
       <button
         onClick={onCreatePatient}
         className="flex items-center gap-2 bg-teal-500 text-white rounded-2xl px-4 py-2 hover:bg-teal-600"
@@ -239,7 +243,7 @@ const DashboardHeader = ({ onCreatePatient }) => (
   </div>
 );
 
-const RecordList = ({ patients, onPatientCreated }) => {
+const RecordList = ({ record, onPatientCreated }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('All');
   const [selectedGender, setSelectedGender] = useState('All');
@@ -250,30 +254,18 @@ const RecordList = ({ patients, onPatientCreated }) => {
   const [selectAll, setSelectAll] = useState(false);
   const navigate = useNavigate();
   // Get unique departments for filter dropdown
-  const departments = useMemo(() => {
-    const depts = [...new Set(patients.map(patient => patient.department))];
-    return ['All', ...depts];
-  }, []);
 
-  // Get unique genders for filter dropdown
-  const genders = useMemo(() => {
-    const genderOptions = [...new Set(patients.map(patient => patient.gender))];
-    return ['All', ...genderOptions];
-  }, []);
+
+  // console.log("Recordsss", record)
 
   // Filter patients based on search term and filters
   const filteredPatients = useMemo(() => {
-    return patients.filter(patient => {
-      const matchesSearch = patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        patient.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        patient.department.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesDepartment = selectedDepartment === 'All' || patient.department === selectedDepartment;
-      const matchesGender = selectedGender === 'All' || patient.gender === selectedGender;
-
-      return matchesSearch && matchesDepartment && matchesGender;
+    return record.filter(patient => {
+      const matchesSearch = patient.patient.toLowerCase().includes(searchTerm.toLowerCase())
+        || patient.recordId.toLowerCase().includes(searchTerm.toLowerCase())
+      return matchesSearch
     });
-  }, [patients, searchTerm, selectedDepartment, selectedGender]);
+  }, [record, searchTerm]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
@@ -290,10 +282,10 @@ const RecordList = ({ patients, onPatientCreated }) => {
   const handleSelectAll = (checked) => {
     setSelectAll(checked);
     if (checked) {
-      const allCurrentPatientIds = currentPatients.map(patient => patient.id);
+      const allCurrentPatientIds = currentPatients.map(patient => patient.recordId);
       setSelectedRows(new Set([...selectedRows, ...allCurrentPatientIds]));
     } else {
-      const currentPatientIds = currentPatients.map(patient => patient.id);
+      const currentPatientIds = currentPatients.map(patient => patient.recordId);
       const newSelectedRows = new Set(selectedRows);
       currentPatientIds.forEach(id => newSelectedRows.delete(id));
       setSelectedRows(newSelectedRows);
@@ -318,14 +310,14 @@ const RecordList = ({ patients, onPatientCreated }) => {
 
   // Action handlers
   const handleView = () => {
-    const selectedPatients = patients.filter(patient => selectedRows.has(patient.id));
+    const selectedPatients = record.filter(patient => selectedRows.has(patient.recordId));
     // console.log('Viewing patients:', selectedPatients);
     // alert(`Viewing ${selectedPatients.length} selected patient(s)`);
-    navigate(`/dashboard/patient/${selectedPatients[0].id}`);
+    navigate(`/dashboard/patients/records/${selectedPatients[0].health_id}`);
   };
 
   const handleDelete = () => {
-    const selectedPatients = patients.filter(patient => selectedRows.has(patient.id));
+    const selectedPatients = record.filter(patient => selectedRows.has(patient.recordId));
     if (confirm(`Are you sure you want to delete ${selectedPatients.length} selected patient(s)?`)) {
       console.log('Deleting patients:', selectedPatients);
       alert(`Deleted ${selectedPatients.length} patient(s)`);
@@ -483,10 +475,10 @@ const RecordList = ({ patients, onPatientCreated }) => {
             )}
             <button
               onClick={handleDelete}
-              className="flex items-center gap-2 px-3 py-1 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 transition-colors"
+              className="flex items-center gap-2 px-3 py-1 bg-teal-500 text-white rounded-lg text-sm hover:bg-teal-600 transition-colors"
             >
-              <FiTrash2 size={14} />
-              <span>Delete</span>
+              <FaDownload size={14} />
+              <span>Download</span>
             </button>
           </div>
         )}
@@ -502,37 +494,36 @@ const RecordList = ({ patients, onPatientCreated }) => {
                 onChange={(e) => handleSelectAll(e.target.checked)}
               />
             </th>
-            <th className="p-3 font-semibold text-gray-600">Name</th>
-            <th className="p-3 font-semibold text-gray-600">Gender</th>
-            <th className="p-3 font-semibold text-gray-600">Date of Birth</th>
-            <th className="p-3 font-semibold text-gray-600">Age</th>
-            <th className="p-3 font-semibold text-gray-600">Type</th>
             <th className="p-3 font-semibold text-gray-600">Patient ID</th>
+            <th className="p-3 font-semibold text-gray-600">Provider</th>
+            <th className="p-3 font-semibold text-gray-600">Created At</th>
+            <th className="p-3 font-semibold text-gray-600">Type</th>
+            <th className="p-3 font-semibold text-gray-600">Record ID</th>
           </tr>
         </thead>
         <tbody>
           {currentPatients.length > 0 ? (
-            currentPatients.map((patient, index) => (
+            currentPatients.map((recordData, index) => (
               <tr
-              key={index}
-              onClick={() => navigate(`/dashboard/patients/records/${patient.id}`)}
-              className={` cursor-pointer border-b border-gray-200 hover:bg-gray-50 ${selectedRows.has(patient.id) ? 'bg-blue-50' : ''}`}>
+                key={index}
+                className={`border-b border-gray-200 hover:bg-gray-50 ${selectedRows.has(recordData.id) ? 'bg-blue-50' : ''}`}>
                 <td className="p-3">
                   <input
                     type="checkbox"
-                    checked={selectedRows.has(patient.id)}
-                    onChange={(e) => handleRowSelection(patient.id, e.target.checked)}
+                    checked={selectedRows.has(recordData.recordId)}
+                    onChange={(e) => handleRowSelection(recordData.recordId, e.target.checked)}
                   />
                 </td>
-                <td className="p-3 flex items-center gap-3">
-                  {/* <img src={`https://i.pravatar.cc/40?u=${patient.name}`} alt={patient.name} className="w-8 h-8 rounded-full" /> */}
-                  {patient.name}
+                <td
+                  className="p-3 flex items-center gap-3 cursor-pointer">
+                  {recordData.patient}
                 </td>
-                <td className="p-3 text-gray-600">{patient.gender}</td>
-                <td className="p-3 text-gray-600">{patient.dob}</td>
-                <td className="p-3 text-gray-600">{patient.age} years old</td>
-                <td className="p-3 text-gray-600">{patient.department}</td>
-                <td className="p-3 text-gray-600 cursor-pointer ">{patient.id}</td>
+                <td className="p-3 text-gray-600">{recordData.data.provider.name}</td>
+                <td className="p-3 text-gray-600">{formatDate(recordData.created_at)}</td>
+                <td className="p-3 text-gray-600">{recordData.type}</td>
+                <td
+                  onClick={() => navigate(`/dashboard/record/view-record/${recordData.recordId}/${recordData.patient}`)}
+                  className="p-3 text-gray-600 cursor-pointer text-teal-500">{recordData.recordId}</td>
               </tr>
             ))
           ) : (
@@ -615,18 +606,12 @@ const RecordList = ({ patients, onPatientCreated }) => {
 
 const PatientsRecord = () => {
   const [isCreatePatientModalOpen, setIsCreatePatientModalOpen] = useState(false);
-  const [patients, setPatients] = useState([
-    { name: 'Brooklyn Simmons', gender: 'Male', dob: '1995-03-18', age: 29, department: 'Cardiology', id: 'OM123AA' },
-    { name: 'Anthony Johnson', gender: 'Male', dob: '1997-03-18', age: 27, department: 'Cardiology', id: 'AT456BB' },
-    { name: 'Sarah Miller Olivia', gender: 'Female', dob: '1987-03-18', age: 35, department: 'Oncology', id: 'EA789CC' },
-    { name: 'Emily Davis', gender: 'Female', dob: '1990-05-12', age: 34, department: 'Neurology', id: 'ED101DD' },
-    { name: 'Michael Chen', gender: 'Male', dob: '1985-08-25', age: 39, department: 'Orthopedics', id: 'MC202EE' },
-    { name: 'Lisa Rodriguez', gender: 'Female', dob: '1992-11-03', age: 32, department: 'Cardiology', id: 'LR303FF' },
-    { name: 'David Wilson', gender: 'Male', dob: '1988-12-15', age: 36, department: 'Neurology', id: 'DW404GG' },
-    { name: 'Jennifer Brown', gender: 'Female', dob: '1993-07-22', age: 31, department: 'Orthopedics', id: 'JB505HH' },
-    { name: 'Robert Taylor', gender: 'Male', dob: '1986-04-08', age: 38, department: 'Cardiology', id: 'RT606II' },
-    { name: 'Amanda Garcia', gender: 'Female', dob: '1991-09-30', age: 33, department: 'Oncology', id: 'AG707JJ' },
-  ]);
+
+  const dispatch = useDispatch()
+  const { records, loading: recordsLoading } = useSelector(state => state.records)
+  useEffect(() => {
+    dispatch(fetchRecords())
+  }, [])
 
   const handlePatientCreated = (newPatient) => {
     // Add the new patient to the list
@@ -635,6 +620,11 @@ const PatientsRecord = () => {
     alert(`Patient "${newPatient.name}" created successfully!`);
   };
 
+  if (recordsLoading) {
+    return <Loader message="Loading records..." />
+  }
+  // const token = localStorage.getItem('token')
+  // console.log("Records", records)
   return (
     <div className="flex h-screen bg-gray-50 text-gray-800">
       {/* <Sidebar /> */}
@@ -642,8 +632,8 @@ const PatientsRecord = () => {
 
         <main className="flex-1 overflow-y-auto p-6 pt-0">
           <DashboardHeader onCreatePatient={() => setIsCreatePatientModalOpen(true)} />
-
-          <RecordList patients={patients} onPatientCreated={handlePatientCreated} />
+          {/* {console.log("Records", records)} */}
+          {records && <RecordList record={records} onPatientCreated={handlePatientCreated} />}
         </main>
       </div>
 

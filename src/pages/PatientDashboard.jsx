@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { LineChart } from '@mui/x-charts/LineChart';
 import { IoPeopleOutline, IoSettingsOutline } from "react-icons/io5";
 import { FaRegCalendarCheck, FaRegHospital } from "react-icons/fa";
@@ -6,6 +6,10 @@ import { BsThreeDotsVertical, BsSearch, BsBell, BsChevronRight, BsPlus } from "r
 import { GoFilter } from "react-icons/go";
 import { FiEye, FiTrash2, FiX } from "react-icons/fi";
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { ageFromDate, formatDate } from '../utility';
+import { fetchPatients } from '../store/slices/patientSlice';
+import { Loader } from '../components/loader';
 
 const CreatePatientModal = ({ isOpen, onClose, onPatientCreated }) => {
   const [formData, setFormData] = useState({
@@ -254,22 +258,21 @@ const PatientList = ({ patients, onPatientCreated }) => {
   const navigate = useNavigate();
   // Get unique departments for filter dropdown
   const departments = useMemo(() => {
-    const depts = [...new Set(patients.map(patient => patient.department))];
+    const depts = patients ? [...new Set(patients.map(patient => patient.department))] : [];
     return ['All', ...depts];
   }, []);
 
   // Get unique genders for filter dropdown
   const genders = useMemo(() => {
-    const genderOptions = [...new Set(patients.map(patient => patient.gender))];
+    const genderOptions = patients ? [...new Set(patients.map(patient => patient.gender))] : [];
     return ['All', ...genderOptions];
   }, []);
 
   // Filter patients based on search term and filters
   const filteredPatients = useMemo(() => {
     return patients.filter(patient => {
-      const matchesSearch = patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        patient.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        patient.department.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = patient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        patient.health_id.toLowerCase().includes(searchTerm.toLowerCase())
 
       const matchesDepartment = selectedDepartment === 'All' || patient.department === selectedDepartment;
       const matchesGender = selectedGender === 'All' || patient.gender === selectedGender;
@@ -324,7 +327,7 @@ const PatientList = ({ patients, onPatientCreated }) => {
     const selectedPatients = patients.filter(patient => selectedRows.has(patient.id));
     // console.log('Viewing patients:', selectedPatients);
     // alert(`Viewing ${selectedPatients.length} selected patient(s)`);
-    navigate(`/dashboard/patient/${selectedPatients[0].id}`);
+    navigate(`/dashboard/patients/records/${selectedPatients[0].health_id}`);
   };
 
   const handleDelete = () => {
@@ -506,10 +509,10 @@ const PatientList = ({ patients, onPatientCreated }) => {
               />
             </th>
             <th className="p-3 font-semibold text-gray-600">Name</th>
+            <th className="p-3 font-semibold text-gray-600">Created At</th>
             <th className="p-3 font-semibold text-gray-600">Gender</th>
             <th className="p-3 font-semibold text-gray-600">Date of Birth</th>
             <th className="p-3 font-semibold text-gray-600">Age</th>
-            <th className="p-3 font-semibold text-gray-600">Department</th>
             <th className="p-3 font-semibold text-gray-600">Patient ID</th>
           </tr>
         </thead>
@@ -524,15 +527,18 @@ const PatientList = ({ patients, onPatientCreated }) => {
                     onChange={(e) => handleRowSelection(patient.id, e.target.checked)}
                   />
                 </td>
-                <td className="p-3 flex items-center gap-3">
-                  <img src={`https://i.pravatar.cc/40?u=${patient.name}`} alt={patient.name} className="w-8 h-8 rounded-full" />
+                {/* <td className="p-3 flex items-center gap-3">
+                  <img src={`https://i.pravatar.cc/40?u=${patient.name}`} alt={patient.full_name} className="w-8 h-8 rounded-full" />
                   {patient.name}
-                </td>
+                </td> */}
+                <td className="p-3 text-gray-600">{patient.full_name}</td>
+                <td className="p-3 text-gray-600">{formatDate(patient.created_at)}</td>
                 <td className="p-3 text-gray-600">{patient.gender}</td>
                 <td className="p-3 text-gray-600">{patient.dob}</td>
-                <td className="p-3 text-gray-600">{patient.age} years old</td>
-                <td className="p-3 text-gray-600">{patient.department}</td>
-                <td className="p-3 text-gray-600">{patient.id}</td>
+                <td className="p-3 text-gray-600">{ageFromDate(patient.dob)} years old</td>
+                <td
+                  onClick={() => navigate(`/dashboard/patients/records/${patient.health_id}`)}
+                  className="p-3 text-gray-600 cursor-pointer text-teal-500">{patient.health_id}</td>
               </tr>
             ))
           ) : (
@@ -615,25 +621,21 @@ const PatientList = ({ patients, onPatientCreated }) => {
 
 const Dashboard = () => {
   const [isCreatePatientModalOpen, setIsCreatePatientModalOpen] = useState(false);
-  const [patients, setPatients] = useState([
-    { name: 'Brooklyn Simmons', gender: 'Male', dob: '1995-03-18', age: 29, department: 'Cardiology', id: 'OM123AA' },
-    { name: 'Anthony Johnson', gender: 'Male', dob: '1997-03-18', age: 27, department: 'Cardiology', id: 'AT456BB' },
-    { name: 'Sarah Miller Olivia', gender: 'Female', dob: '1987-03-18', age: 35, department: 'Oncology', id: 'EA789CC' },
-    { name: 'Emily Davis', gender: 'Female', dob: '1990-05-12', age: 34, department: 'Neurology', id: 'ED101DD' },
-    { name: 'Michael Chen', gender: 'Male', dob: '1985-08-25', age: 39, department: 'Orthopedics', id: 'MC202EE' },
-    { name: 'Lisa Rodriguez', gender: 'Female', dob: '1992-11-03', age: 32, department: 'Cardiology', id: 'LR303FF' },
-    { name: 'David Wilson', gender: 'Male', dob: '1988-12-15', age: 36, department: 'Neurology', id: 'DW404GG' },
-    { name: 'Jennifer Brown', gender: 'Female', dob: '1993-07-22', age: 31, department: 'Orthopedics', id: 'JB505HH' },
-    { name: 'Robert Taylor', gender: 'Male', dob: '1986-04-08', age: 38, department: 'Cardiology', id: 'RT606II' },
-    { name: 'Amanda Garcia', gender: 'Female', dob: '1991-09-30', age: 33, department: 'Oncology', id: 'AG707JJ' },
-  ]);
-
+  const { patients, loading: patientsLoading } = useSelector(state => state.patients)
+  const dispatch = useDispatch()
   const handlePatientCreated = (newPatient) => {
     // Add the new patient to the list
     setPatients(prevPatients => [newPatient, ...prevPatients]);
     console.log('New patient created:', newPatient);
     alert(`Patient "${newPatient.name}" created successfully!`);
   };
+  useEffect(() => {
+    dispatch(fetchPatients())
+  }, [])
+
+  if (patientsLoading) {
+    return <Loader message="Fetching patients..." />
+  }
 
   return (
     <div className="flex h-screen bg-gray-50 text-gray-800">
@@ -643,7 +645,22 @@ const Dashboard = () => {
         <main className="flex-1 overflow-y-auto p-6 pt-0">
           <DashboardHeader onCreatePatient={() => setIsCreatePatientModalOpen(true)} />
 
-          <PatientList patients={patients} onPatientCreated={handlePatientCreated} />
+          {patients ? <PatientList patients={patients} onPatientCreated={handlePatientCreated} /> : <>
+            <div className="flex h-screen bg-gray-50 items-center justify-center">
+              <div className="text-center">
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Record Not Found</h2>
+                <p className="text-gray-600 mb-4">The patients record you're looking for could not be found.</p>
+                <button
+                  onClick={() => {
+                    dispatch(fetchPatients())
+                  }}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                >
+                  Try again
+                </button>
+              </div>
+            </div>
+          </>}
         </main>
       </div>
 

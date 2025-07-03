@@ -10,6 +10,9 @@ import PatientMoney from "./components/PatientMoney"
 import RecordsDashboard from "./pages/RecordsDashboard"
 import PatientProfile from "./pages/patientProfile"
 import PatientRecords from "./pages/records"
+import ViewRecord from "./pages/view-record"
+import MedicardDashboard from "./pages/medicardDashboard"
+import ViewCard from "./pages/view-card"
 
 function App() {
 
@@ -21,10 +24,12 @@ function App() {
         <Route path="dashboard" element={<DashboardLayout />}>
           <Route index element={<HomeDashboard />} />
           <Route path="patients" element={<PatientDashboard />} />
-          <Route path="patients/records/:id" element={<PatientRecords />} />
+          <Route path="patients/records/:healthId" element={<PatientRecords />} />
           <Route path="patient/:id" element={<PatientProfile />} />
           <Route path="records" element={<RecordsDashboard />} />
-          <Route path="medicards" element={<RecordsDashboard />} />
+          <Route path="medicards" element={<MedicardDashboard />} />
+          <Route path="view-card/:cardId" element={<ViewCard />} />
+          <Route path="record/view-record/:recordId/:patientId" element={<ViewRecord />} />
         </Route>
       </Routes>
     </>

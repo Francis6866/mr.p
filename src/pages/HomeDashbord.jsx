@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { LineChart } from '@mui/x-charts/LineChart';
 import { IoPeopleOutline, IoSettingsOutline } from "react-icons/io5";
 import { FaRegCalendarCheck, FaRegHospital } from "react-icons/fa";
@@ -14,6 +14,12 @@ import {
     RiQuestionLine,
     RiArrowDownSLine
 } from "react-icons/ri";
+import { useAuth } from '../store/hooks';
+import { useNavigate } from 'react-router-dom';
+import { fetchPatients } from '../store/slices/patientSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { Loader } from '../components/loader';
+import { ageFromDate, formatDate } from '../utility';
 
 const Sidebar = () => {
     const menuItems = [
@@ -107,7 +113,7 @@ const DashboardHeader = () => (
             </button>
         </div>
     </div>
-);
+); 
 
 const StatCard = ({ icon, title, value, percentage, iconBgColor }) => (
     <div className="bg-white p-3 rounded-lg shadow flex flex-col justify-between">
@@ -123,7 +129,11 @@ const StatCard = ({ icon, title, value, percentage, iconBgColor }) => (
                 +{percentage}%
             </span>
         </div>
-        <a href="#" className="flex-row  justify-between text-teal-500 text-sm font-semibold mt-4 flex items-center gap-1">
+        <a onClick={() => {
+            if (title === 'Total Patients') {
+                navigate('/patients')
+            }
+        }} className="flex-row  justify-between text-teal-500 text-sm font-semibold mt-4 flex items-center gap-1">
             See details
             <BsChevronRight />
         </a>
@@ -217,7 +227,7 @@ const AppointmentList = () => {
     )
 }
 
-const PatientList = () => {
+const PatientList = ({patients}) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDepartment, setSelectedDepartment] = useState('All');
     const [selectedGender, setSelectedGender] = useState('All');
@@ -226,19 +236,19 @@ const PatientList = () => {
     const [itemsPerPage, setItemsPerPage] = useState(5);
     const [selectedRows, setSelectedRows] = useState(new Set());
     const [selectAll, setSelectAll] = useState(false);
-
-    const patients = [
-        { name: 'Brooklyn Simmons', gender: 'Male', dob: '1995-03-18', age: 29, department: 'Cardiology', id: '#OM123AA' },
-        { name: 'Anthony Johnson', gender: 'Male', dob: '1997-03-18', age: 27, department: 'Cardiology', id: '#AT456BB' },
-        { name: 'Sarah Miller Olivia', gender: 'Female', dob: '1987-03-18', age: 35, department: 'Oncology', id: '#EA789CC' },
-        { name: 'Emily Davis', gender: 'Female', dob: '1990-05-12', age: 34, department: 'Neurology', id: '#ED101DD' },
-        { name: 'Michael Chen', gender: 'Male', dob: '1985-08-25', age: 39, department: 'Orthopedics', id: '#MC202EE' },
-        { name: 'Lisa Rodriguez', gender: 'Female', dob: '1992-11-03', age: 32, department: 'Cardiology', id: '#LR303FF' },
-        { name: 'David Wilson', gender: 'Male', dob: '1988-12-15', age: 36, department: 'Neurology', id: '#DW404GG' },
-        { name: 'Jennifer Brown', gender: 'Female', dob: '1993-07-22', age: 31, department: 'Orthopedics', id: '#JB505HH' },
-        { name: 'Robert Taylor', gender: 'Male', dob: '1986-04-08', age: 38, department: 'Cardiology', id: '#RT606II' },
-        { name: 'Amanda Garcia', gender: 'Female', dob: '1991-09-30', age: 33, department: 'Oncology', id: '#AG707JJ' },
-    ];
+    const navigate = useNavigate()
+    // const patients = [
+    //     { name: 'Brooklyn Simmons', gender: 'Male', dob: '1995-03-18', age: 29, department: 'Cardiology', id: '#OM123AA' },
+    //     { name: 'Anthony Johnson', gender: 'Male', dob: '1997-03-18', age: 27, department: 'Cardiology', id: '#AT456BB' },
+    //     { name: 'Sarah Miller Olivia', gender: 'Female', dob: '1987-03-18', age: 35, department: 'Oncology', id: '#EA789CC' },
+    //     { name: 'Emily Davis', gender: 'Female', dob: '1990-05-12', age: 34, department: 'Neurology', id: '#ED101DD' },
+    //     { name: 'Michael Chen', gender: 'Male', dob: '1985-08-25', age: 39, department: 'Orthopedics', id: '#MC202EE' },
+    //     { name: 'Lisa Rodriguez', gender: 'Female', dob: '1992-11-03', age: 32, department: 'Cardiology', id: '#LR303FF' },
+    //     { name: 'David Wilson', gender: 'Male', dob: '1988-12-15', age: 36, department: 'Neurology', id: '#DW404GG' },
+    //     { name: 'Jennifer Brown', gender: 'Female', dob: '1993-07-22', age: 31, department: 'Orthopedics', id: '#JB505HH' },
+    //     { name: 'Robert Taylor', gender: 'Male', dob: '1986-04-08', age: 38, department: 'Cardiology', id: '#RT606II' },
+    //     { name: 'Amanda Garcia', gender: 'Female', dob: '1991-09-30', age: 33, department: 'Oncology', id: '#AG707JJ' },
+    // ];
 
     // Get unique departments for filter dropdown
     const departments = useMemo(() => {
@@ -255,10 +265,9 @@ const PatientList = () => {
     // Filter patients based on search term and filters
     const filteredPatients = useMemo(() => {
         return patients.filter(patient => {
-            const matchesSearch = patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                 patient.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                 patient.department.toLowerCase().includes(searchTerm.toLowerCase());
-            
+            const matchesSearch = patient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                patient.health_id.toLowerCase().includes(searchTerm.toLowerCase())
+
             const matchesDepartment = selectedDepartment === 'All' || patient.department === selectedDepartment;
             const matchesGender = selectedGender === 'All' || patient.gender === selectedGender;
 
@@ -300,19 +309,14 @@ const PatientList = () => {
             newSelectedRows.delete(patientId);
         }
         setSelectedRows(newSelectedRows);
-        
+
         // Update select all state
         const currentPatientIds = currentPatients.map(patient => patient.id);
         const allCurrentSelected = currentPatientIds.every(id => newSelectedRows.has(id));
         setSelectAll(allCurrentSelected);
     };
 
-    // Action handlers
-    const handleView = () => {
-        const selectedPatients = patients.filter(patient => selectedRows.has(patient.id));
-        console.log('Viewing patients:', selectedPatients);
-        alert(`Viewing ${selectedPatients.length} selected patient(s)`);
-    };
+    
 
     const handleDelete = () => {
         const selectedPatients = patients.filter(patient => selectedRows.has(patient.id));
@@ -348,7 +352,7 @@ const PatientList = () => {
     const getPageNumbers = () => {
         const pages = [];
         const maxVisiblePages = 5;
-        
+
         if (totalPages <= maxVisiblePages) {
             for (let i = 1; i <= totalPages; i++) {
                 pages.push(i);
@@ -376,7 +380,7 @@ const PatientList = () => {
                 pages.push(totalPages);
             }
         }
-        
+
         return pages;
     };
 
@@ -387,15 +391,15 @@ const PatientList = () => {
                 <div className="flex items-center gap-4">
                     <div className="relative">
                         <BsSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input 
-                            type="text" 
-                            placeholder="Search by name or ID" 
+                        <input
+                            type="text"
+                            placeholder="Search by name or ID"
                             className="border border-gray-200 rounded-lg pl-10 pr-4 py-2 w-84"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <button 
+                    <button
                         className={`flex items-center gap-2 border border-gray-200 rounded-lg px-4 py-2 hover:bg-gray-100 ${showFilters ? 'bg-teal-50 border-teal-300' : ''}`}
                         onClick={() => setShowFilters(!showFilters)}
                     >
@@ -403,7 +407,7 @@ const PatientList = () => {
                         <span>Filter</span>
                     </button>
                     {(searchTerm || selectedDepartment !== 'All' || selectedGender !== 'All') && (
-                        <button 
+                        <button
                             className="flex items-center gap-2 border rounded-lg px-4 py-2 hover:bg-gray-100 text-red-600"
                             onClick={clearFilters}
                         >
@@ -419,7 +423,7 @@ const PatientList = () => {
                     <div className="flex items-center gap-6">
                         <div className="flex items-center gap-2">
                             <label className="text-sm font-medium text-gray-700">Department:</label>
-                            <select 
+                            <select
                                 value={selectedDepartment}
                                 onChange={(e) => setSelectedDepartment(e.target.value)}
                                 className="border rounded-lg px-3 py-1 text-sm"
@@ -431,7 +435,7 @@ const PatientList = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <label className="text-sm font-medium text-gray-700">Gender:</label>
-                            <select 
+                            <select
                                 value={selectedGender}
                                 onChange={(e) => setSelectedGender(e.target.value)}
                                 className="border rounded-lg px-3 py-1 text-sm"
@@ -455,20 +459,22 @@ const PatientList = () => {
                         </span>
                     )}
                 </div> */}
-                
+
                 {/* Action Buttons - Only show when rows are selected */}
                 {selectedRows.size > 0 && (
                     <div className="flex items-center gap-3">
                         <span className="text-sm text-gray-600">
                             {selectedRows.size} selected
                         </span>
-                        <button
-                            onClick={handleView}
+                        {/* <button
+                            onClick={() => {
+                                navigate(`/dashboard/patients/records/${selectedRows.size}`)
+                            }}
                             className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors"
                         >
                             <FiEye size={14} />
                             <span>View</span>
-                        </button>
+                        </button> */}
                         <button
                             onClick={handleDelete}
                             className="flex items-center gap-2 px-3 py-1 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 transition-colors"
@@ -484,17 +490,17 @@ const PatientList = () => {
                 <thead>
                     <tr className="bg-gray-50">
                         <th className="p-3 w-10">
-                            <input 
-                                type="checkbox" 
+                            <input
+                                type="checkbox"
                                 checked={selectAll}
                                 onChange={(e) => handleSelectAll(e.target.checked)}
                             />
                         </th>
                         <th className="p-3 font-semibold text-gray-600">Name</th>
+                        <th className="p-3 font-semibold text-gray-600">Created At</th>
                         <th className="p-3 font-semibold text-gray-600">Gender</th>
                         <th className="p-3 font-semibold text-gray-600">Date of Birth</th>
                         <th className="p-3 font-semibold text-gray-600">Age</th>
-                        <th className="p-3 font-semibold text-gray-600">Department</th>
                         <th className="p-3 font-semibold text-gray-600">Patient ID</th>
                     </tr>
                 </thead>
@@ -503,21 +509,24 @@ const PatientList = () => {
                         currentPatients.map((patient, index) => (
                             <tr key={index} className={`border-b border-gray-200 hover:bg-gray-50 ${selectedRows.has(patient.id) ? 'bg-blue-50' : ''}`}>
                                 <td className="p-3">
-                                    <input 
-                                        type="checkbox" 
+                                    <input
+                                        type="checkbox"
                                         checked={selectedRows.has(patient.id)}
                                         onChange={(e) => handleRowSelection(patient.id, e.target.checked)}
                                     />
                                 </td>
                                 <td className="p-3 flex items-center gap-3">
                                     <img src={`https://i.pravatar.cc/40?u=${patient.name}`} alt={patient.name} className="w-8 h-8 rounded-full" />
-                                    {patient.name}
+                                    {patient.full_name}
                                 </td>
+                                <td className="p-3 text-gray-600">{formatDate(patient.created_at)}</td>
                                 <td className="p-3 text-gray-600">{patient.gender}</td>
                                 <td className="p-3 text-gray-600">{patient.dob}</td>
-                                <td className="p-3 text-gray-600">{patient.age} years old</td>
-                                <td className="p-3 text-gray-600">{patient.department}</td>
-                                <td className="p-3 text-gray-600">{patient.id}</td>
+                                <td className="p-3 text-gray-600">{patient.dob ? ageFromDate(patient.dob) : ''}</td>
+                                {/* <td className="p-3 text-gray-600">{patient.department}</td> */}
+                                <td
+                                    onClick={() => navigate(`/dashboard/patients/records/${patient.health_id}`)}
+                                    className="p-3 text-gray-600 cursor-pointer text-teal-500">{patient.health_id}</td>
                             </tr>
                         ))
                     ) : (
@@ -536,7 +545,7 @@ const PatientList = () => {
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2">
                             <label className="text-sm text-gray-600">Show:</label>
-                            <select 
+                            <select
                                 value={itemsPerPage}
                                 onChange={(e) => {
                                     setItemsPerPage(Number(e.target.value));
@@ -552,45 +561,42 @@ const PatientList = () => {
                             <span className="text-sm text-gray-600">entries</span>
                         </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
                         <button
                             onClick={goToPreviousPage}
                             disabled={currentPage === 1}
-                            className={`px-3 py-1 rounded border text-sm ${
-                                currentPage === 1 
-                                    ? 'border-gray-200 text-gray-400 cursor-not-allowed' 
-                                    : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-                            }`}
+                            className={`px-3 py-1 rounded border text-sm ${currentPage === 1
+                                ? 'border-gray-200 text-gray-400 cursor-not-allowed'
+                                : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                                }`}
                         >
                             Previous
                         </button>
-                        
+
                         {getPageNumbers().map((page, index) => (
                             <button
                                 key={index}
                                 onClick={() => typeof page === 'number' && goToPage(page)}
                                 disabled={page === '...'}
-                                className={`px-3 py-1 rounded border text-sm ${
-                                    page === currentPage
-                                        ? 'bg-teal-500 text-white border-teal-500'
-                                        : page === '...'
+                                className={`px-3 py-1 rounded border text-sm ${page === currentPage
+                                    ? 'bg-teal-500 text-white border-teal-500'
+                                    : page === '...'
                                         ? 'border-gray-200 text-gray-400 cursor-not-allowed'
                                         : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-                                }`}
+                                    }`}
                             >
                                 {page}
                             </button>
                         ))}
-                        
+
                         <button
                             onClick={goToNextPage}
                             disabled={currentPage === totalPages}
-                            className={`px-3 py-1 rounded border text-sm ${
-                                currentPage === totalPages 
-                                    ? 'border-gray-200 text-gray-400 cursor-not-allowed' 
-                                    : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-                            }`}
+                            className={`px-3 py-1 rounded border text-sm ${currentPage === totalPages
+                                ? 'border-gray-200 text-gray-400 cursor-not-allowed'
+                                : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                                }`}
                         >
                             Next
                         </button>
@@ -600,28 +606,52 @@ const PatientList = () => {
         </div>
     )
 }
-
 const Dashboard = () => {
+    const { user, loading, isAuthenticated } = useAuth();
+    const userData = JSON.parse(user)
+    // console.log(JSON.parse(user))
+    const dispatch = useDispatch()
+    const { patients, loading: patientsLoading } = useSelector(state => state.patients)
+
+    useEffect(() => {
+        dispatch(fetchPatients())
+    }, [])
+    console.log("Patients fetched", patients)
+
+    if (patientsLoading) {
+        return <Loader message="Fetching patients..." />
+    }
     return (
         <div className="flex h-screen bg-gray-50 text-gray-800">
-            {/* <Sidebar /> */}
             <div className="flex-1 flex flex-col">
                 <header className="p-6 bg-gray-50 flex justify-between items-center">
-                    <h1 className="text-xl font-semibold">
-                        <span role="img" aria-label="sun">☀️</span> Good Morning, Dr. Robert!
-                    </h1>
+                    <p className="text-lg flex-1  px-4 py-4"
+                        style={{
+                            marginRight: '40px',
+                            backgroundColor: userData?.environment === 'production' ? null : '#FFE2E3',
+                            color: userData?.environment === 'production' ? '#fff' : 'crimson'
+                        }}>
+                        <span role="img" aria-label="sun">
+                        </span> {userData?.environment === 'production' ?
+                            '' :
+                            'Your business is in test mode, submit all compliance documents to go live'}
+                    </p>
                     <div className="flex items-center gap-6">
                         <BsBell size={20} className="text-gray-500" />
-                        <img src="https://i.pravatar.cc/40?u=drrobert" alt="Dr. Robert" className="w-10 h-10 rounded-full" />
+                        <img
+                            src={user?.avatar || `https://i.pravatar.cc/40?u=${user?.email || 'default'}`}
+                            alt={user?.name || 'User'}
+                            className="w-10 h-10 rounded-full"
+                        />
                     </div>
                 </header>
                 <main className="flex-1 overflow-y-auto p-6 pt-0">
                     <DashboardHeader />
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <StatCard icon={<IoPeopleOutline size={24} className="text-blue-500" />} title="Total Patients" value="579" percentage={15} iconBgColor="bg-blue-100" />
-                        <StatCard icon={<FaRegCalendarCheck size={24} className="text-orange-500" />} title="Total Appointment" value="54" percentage={10} iconBgColor="bg-orange-100" />
-                        <StatCard icon={<FaRegHospital size={24} className="text-teal-500" />} title="Total Income" value="$8,399.24" percentage={28} iconBgColor="bg-teal-100" />
-                        <StatCard icon={<FaRegHospital size={24} className="text-indigo-500" />} title="Total Treatments" value="112" percentage={12} iconBgColor="bg-indigo-100" />
+                        <StatCard icon={<IoPeopleOutline size={24} className="text-blue-500" />} title="Total Patients" value={patients.length} percentage={15} iconBgColor="bg-blue-100" />
+                        <StatCard icon={<FaRegCalendarCheck size={24} className="text-orange-500" />} title="All Medicards" value="54" percentage={10} iconBgColor="bg-orange-100" />
+                        <StatCard icon={<FaRegHospital size={24} className="text-teal-500" />} title="Records Created" value="8,399.24" percentage={28} iconBgColor="bg-teal-100" />
+                        <StatCard icon={<FaRegHospital size={24} className="text-indigo-500" />} title="All Doctors" value="112" percentage={12} iconBgColor="bg-indigo-100" />
                     </div>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
                         <div className="lg:col-span-2">
@@ -631,7 +661,7 @@ const Dashboard = () => {
                             <AppointmentList />
                         </div>
                     </div>
-                    <PatientList />
+                    <PatientList patients={patients} />
                 </main>
             </div>
         </div>

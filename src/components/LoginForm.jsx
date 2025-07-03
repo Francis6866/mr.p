@@ -3,7 +3,7 @@ import Input from './Input'
 import Button from './Button'
 import PasswordInput from './PasswordInput'
 
-const LoginForm = ({ handleIsLogin, navigate }) => {
+const LoginForm = ({ handleLogin, navigate }) => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [passwordType, setPasswordType] = useState('password')
@@ -40,9 +40,7 @@ const LoginForm = ({ handleIsLogin, navigate }) => {
             email,
             password
         }
-
-        console.log(formDetails)
-        navigate("/dashboard")
+        handleLogin(formDetails)
     }
 
   return (
@@ -79,7 +77,7 @@ const LoginForm = ({ handleIsLogin, navigate }) => {
             {error && Object.values(error).map(item => {
                 return <p className="text-red-500 text-sm mt-2" key={item}>{item}</p>
             })} 
-            <p className='text-[#576ae6] text-[14px] mt-6 cursor-pointer' onClick={handleIsLogin}>
+            <p className='text-[#576ae6] text-[14px] mt-6 cursor-pointer' >
                 Forgot password?
             </p>
         </form>

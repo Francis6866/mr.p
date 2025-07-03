@@ -18,14 +18,17 @@ import {
     FaHeadset,
     FaBook,
     FaToggleOn,
-    FaTimes
+    FaTimes,
+    FaToggleOff
 } from 'react-icons/fa';
+import { useAuth } from '../store/hooks';
 
 const DashNav = () => {
     const [isOpen, setIsOpen] = useState(false); // Toggle menu state
     const [isCollapsed, setIsCollapsed] = useState(window.innerWidth < 768 ? true : false);
     const [isMobile, setIsMobile] = useState(false);
-
+    const { user } = useAuth();
+    const userData = JSON.parse(user)
     // Handle window resize and set mobile state
     useEffect(() => {
         console.log(window.innerWidth)
@@ -51,11 +54,11 @@ const DashNav = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [isMobile, isOpen]);
 
-    return (
+    return userData && (
         <nav className={` bg-gray-300 h-screen text-[14px] transition-all duration-300 overflow-hidden space-y-6`}>
             {/* Mobile Menu Button - Always visible on mobile */}
 
-
+            {console.log(userData)}
             {/* Navigation */}
             <nav className={`scroll-smooth nav-container h-screen bg-white shadow-lg transition-all duration-300 z-40 ${isMobile ? `${isOpen ? 'translate-x-0' : '-translate-x-full'} w-24` : `${isCollapsed ? 'w-20' : 'w-64'}`}`}>
 
@@ -69,8 +72,8 @@ const DashNav = () => {
                             </div>
                             {(!isCollapsed || isMobile) && (
                                 <div>
-                                    <h2 className="font-semibold text-gray-800">TECHTAN I...</h2>
-                                    <p className="text-sm text-gray-500">ID KPY30844</p>
+                                    <h2 className="font-semibold text-gray-800">{userData.name}</h2>
+                                    <p className="text-sm text-gray-500">{userData.business_id}</p>
                                 </div>
                             )}
                         </div>
@@ -140,8 +143,8 @@ const DashNav = () => {
                     <div className={`mt-8 p-4 bg-gray-50 rounded-lg ${isCollapsed && !isMobile ? 'text-center' : ''}`}>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-2">
-                                <FaToggleOn className="text-green-500 text-2xl" />
-                                {(!isCollapsed || isMobile) && <span className="font-medium">Live Mode</span>}
+                                {userData.environment === 'production' ? <FaToggleOn className="text-green-500 text-2xl" /> : <FaToggleOff className="text-red-500 text-2xl" />}
+                                {(!isCollapsed || isMobile) && <span className="font-medium">{userData.environment === 'production' ? 'Live Mode' : 'Go Live'}</span>}
                             </div>
                             {(!isCollapsed || isMobile) && (
                                 <button className="text-gray-400 hover:text-gray-600">
